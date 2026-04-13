@@ -1,4 +1,5 @@
 import axios from 'axios';
+import API_BASE_URL from "../config/api";
 
 // Utility to convert Base64 string to Uint8Array for the VAPID key
 function urlBase64ToUint8Array(base64String) {
@@ -39,7 +40,7 @@ export const subscribeToPushNotifications = async () => {
         await navigator.serviceWorker.ready;
 
         // 4. Get the public VAPID key from the backend
-        const { data: vapidPublicKey } = await axios.get('http://localhost:5000/api/notifications/vapidPublicKey');
+        const { data: vapidPublicKey } = await axios.get(`${API_BASE_URL}/api/notifications/vapidPublicKey`);
         const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
 
         // 5. Subscribe to PushManager
@@ -51,7 +52,7 @@ export const subscribeToPushNotifications = async () => {
         // 6. Send the subscription object to the backend
         const token = localStorage.getItem('token');
         if (token) {
-            await axios.post('http://localhost:5000/api/notifications/subscribe', subscription, {
+            await axios.post(`${API_BASE_URL}/api/notifications/subscribe`, subscription, {
                 headers: {
                     'x-auth-token': token
                 }

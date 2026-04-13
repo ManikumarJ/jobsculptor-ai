@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Briefcase, FileText, LayoutDashboard, LogOut, Bell } from 'lucide-react';
 import axios from 'axios';
+import API_BASE_URL from "../config/api";
 
 const Navbar = () => {
     const { isAuthenticated, logout } = useContext(AuthContext);
@@ -22,7 +23,7 @@ const Navbar = () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            const res = await axios.get('http://localhost:5000/api/notifications', {
+            const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
                 headers: { 'x-auth-token': token }
             });
             setNotifications(res.data);
@@ -35,7 +36,7 @@ const Navbar = () => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
-                await axios.put('http://localhost:5000/api/notifications/read-all', {}, {
+                await axios.put(`${API_BASE_URL}/api/notifications/read-all`, {}, {
                     headers: { 'x-auth-token': token }
                 });
                 setNotifications(notifications.map(n => ({ ...n, isRead: true })));

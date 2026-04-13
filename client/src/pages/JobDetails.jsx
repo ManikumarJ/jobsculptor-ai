@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Building, Calendar, Star, Trash2, Edit, ExternalLink } from 'lucide-react';
-
+import API_BASE_URL from "../config/api";
 const COLUMNS = ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected'];
 
 const JobDetails = () => {
@@ -25,7 +25,7 @@ const JobDetails = () => {
 
     const fetchJob = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/jobs/${id}`);
+            const res = await axios.get(`${API_BASE_URL}/api/jobs/${id}`);
             setJob(res.data);
             setEditForm(res.data);
             setLoading(false);
@@ -45,7 +45,7 @@ const JobDetails = () => {
 
     const handleSaveEdit = async () => {
         try {
-            const res = await axios.put(`http://localhost:5000/api/jobs/${id}`, editForm);
+            const res = await axios.put(`${API_BASE_URL}/api/jobs/${id}`, editForm);
             setJob(res.data);
             setIsEditing(false);
         } catch (err) {
@@ -58,7 +58,7 @@ const JobDetails = () => {
         const newStatus = e.target.value;
         setStatusUpdating(true);
         try {
-            const res = await axios.put(`http://localhost:5000/api/jobs/${id}`, {
+            const res = await axios.put(`${API_BASE_URL}/api/jobs/${id}`, {
                 status: newStatus
             });
             setJob(res.data);
@@ -75,7 +75,7 @@ const JobDetails = () => {
         if (!window.confirm('Are you sure you want to delete this job?')) return;
 
         try {
-            await axios.delete(`http://localhost:5000/api/jobs/${id}`);
+            await axios.delete(`${API_BASE_URL}/api/jobs/${id}`);
             alert('Job deleted successfully');
             navigate('/tracker');
         } catch (err) {

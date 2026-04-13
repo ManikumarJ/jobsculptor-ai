@@ -14,13 +14,25 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Column } from '../components/kanban/Column';
 import { JobCard } from '../components/kanban/JobCard';
 import { Plus } from 'lucide-react';
-
-const COLUMNS = ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected'];
+import { AuthContext } from '../context/AuthContext';
+import API_BASE_URL from "../config/api";
 
 const JobTracker = () => {
+    const { user, updateUser } = React.useContext(AuthContext);
     const [jobs, setJobs] = useState([]);
+    const [columns, setColumns] = useState(['Saved', 'Applied', 'Interview', 'Offer', 'Rejected']);
     const [loading, setLoading] = useState(true);
     const [activeId, setActiveId] = useState(null);
+
+    // Add List State
+    const [isAddingList, setIsAddingList] = useState(false);
+    const [newColumnName, setNewColumnName] = useState('');
+
+    useEffect(() => {
+        if (user && user.jobColumns) {
+            setColumns(user.jobColumns);
+        }
+    }, [user]);
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -50,7 +62,7 @@ const JobTracker = () => {
 
     const fetchJobs = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/jobs');
+            const res = await axios.get(`${API_BASE_URL}/api/jobs`);
             setJobs(res.data);
         } catch (err) {
             console.error(err);
@@ -75,7 +87,7 @@ const JobTracker = () => {
 
         // Determine the column over
         const activeColumn = active.data.current?.sortable?.containerId;
-        const overColumn = typeof overId === 'string' && COLUMNS.includes(overId)
+        const overColumn = typeof overId === 'string' && columns.includes(overId)
             ? overId
             : over.data.current?.sortable?.containerId;
 
@@ -105,7 +117,7 @@ const JobTracker = () => {
 
             // API call to update status
             try {
-                await axios.put(`http://localhost:5000/api/jobs/${activeId}`, {
+                await axios.put(`${API_BASE_URL}/api/jobs/${activeId}`, {
                     status: overColumn
                 });
             } catch (err) {
@@ -123,7 +135,7 @@ const JobTracker = () => {
     const handleAddJob = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:5000/api/jobs', {
+            const res = await axios.post(`${API_BASE_URL}/api/jobs`, {
                 ...formData,
                 matchScore: formData.matchScore ? parseInt(formData.matchScore) : 0
             });
@@ -137,7 +149,7 @@ const JobTracker = () => {
 
     const handleDeleteJob = async (id) => {
         try {
-            await axios.delete(`http://localhost:5000/api/jobs/${id}`);
+            await axios.delete(`${API_BASE_URL}/api/jobs/${id}`);
             setJobs(jobs.filter(job => job._id !== id));
         } catch (err) {
             console.error(err);
@@ -146,11 +158,36 @@ const JobTracker = () => {
 
     const handleUpdateJob = async (updatedJob) => {
         try {
-            await axios.put(`http://localhost:5000/api/jobs/${updatedJob._id}`, updatedJob);
+            await axios.put(`${API_BASE_URL}/api/jobs/${updatedJob._id}`, updatedJob);
             setJobs(jobs.map(j => j._id === updatedJob._id ? updatedJob : j));
         } catch (err) {
             console.error(err);
         }
+    };
+
+    const handleAddColumn = async () => {
+        if (!newColumnName.trim()) {
+            setIsAddingList(false);
+            return;
+        }
+        const titleUpper = newColumnName.trim().toUpperCase();
+        if (columns.includes(titleUpper)) {
+            setIsAddingList(false);
+            setNewColumnName('');
+            return;
+        }
+        const updatedColumns = [...columns, titleUpper];
+        try {
+            await axios.put(`${API_BASE_URL}/api/auth/columns`, { columns: updatedColumns });
+            setColumns(updatedColumns);
+            if (user) {
+                updateUser({ ...user, jobColumns: updatedColumns });
+            }
+        } catch (err) {
+            console.error('Failed to add column:', err);
+        }
+        setIsAddingList(false);
+        setNewColumnName('');
     };
 
     if (loading) return <div className="p-8 text-center text-gray-500 min-h-[calc(100vh-64px)] flex items-center justify-center">Loading your board...</div>;
@@ -180,7 +217,7 @@ const JobTracker = () => {
                     onDragEnd={handleDragEnd}
                 >
                     <div className="flex gap-6 h-full min-w-max pb-4">
-                        {COLUMNS.map((stage) => (
+                        {columns.map((stage) => (
                             <Column
                                 key={stage}
                                 id={stage}
@@ -190,6 +227,38 @@ const JobTracker = () => {
                                 onUpdateJob={handleUpdateJob}
                             />
                         ))}
+
+                        {/* + ADD LIST Component */}
+                        <div className="flex flex-col bg-gray-50/50 rounded-2xl w-80 flex-shrink-0 border border-gray-100 border-dashed h-full backdrop-blur-sm transition-all">
+                            {isAddingList ? (
+                                <div className="p-4 bg-white/50 rounded-2xl">
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        placeholder="List Title..."
+                                        className="w-full text-sm p-2 border border-brand-200 rounded-md focus:ring-1 focus:ring-brand-500 outline-none uppercase font-semibold text-gray-800"
+                                        value={newColumnName}
+                                        onChange={(e) => setNewColumnName(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleAddColumn();
+                                            if (e.key === 'Escape') { setIsAddingList(false); setNewColumnName(''); }
+                                        }}
+                                        onBlur={handleAddColumn}
+                                    />
+                                    <div className="flex gap-2 mt-2">
+                                        <button onPointerDown={(e) => { e.preventDefault(); handleAddColumn(); }} className="bg-brand-600 text-white text-xs font-bold py-1.5 px-3 rounded">Add List</button>
+                                        <button onPointerDown={(e) => { e.preventDefault(); setIsAddingList(false); setNewColumnName(''); }} className="text-gray-500 hover:bg-gray-100 text-xs px-3 rounded">Cancel</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setIsAddingList(true)}
+                                    className="h-[60px] w-full flex items-center justify-center text-gray-500 hover:text-brand-600 font-bold tracking-wider text-sm hover:bg-white/50 transition-colors rounded-2xl"
+                                >
+                                    <Plus className="mr-1 h-4 w-4" /> ADD LIST
+                                </button>
+                            )}
+                        </div>
                     </div>
                     <DragOverlay dropAnimation={{
                         sideEffects: defaultDropAnimationSideEffects({
@@ -237,7 +306,7 @@ const JobTracker = () => {
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700">Status</label>
                                                 <select name="status" value={formData.status} onChange={handleInputChange} className="mt-1 block w-full border border-gray-200 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm bg-gray-50/50 focus:bg-white transition-colors">
-                                                    {COLUMNS.map(c => <option key={c} value={c}>{c}</option>)}
+                                                    {columns.map(c => <option key={c} value={c}>{c}</option>)}
                                                 </select>
                                             </div>
                                             <div>

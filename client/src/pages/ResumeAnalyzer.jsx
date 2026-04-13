@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import API_BASE_URL from "../config/api";
 
 const ResumeAnalyzer = () => {
   const { token } = useContext(AuthContext);
@@ -38,7 +39,7 @@ const ResumeAnalyzer = () => {
     setAddLoading(true);
     try {
       await axios.post(
-        'http://localhost:5000/api/jobs',
+        `${API_BASE_URL}/api/jobs`,
         {
           companyName: jobData.companyName,
           jobTitle: jobData.jobTitle,
@@ -102,7 +103,7 @@ const ResumeAnalyzer = () => {
     try {
       // inside handleAnalyze
       const res = await axios.post(
-        'http://localhost:5000/api/analyze', // <--- no /analyze here
+        `${API_BASE_URL}/api/analyze`, // <--- no /analyze here
         formData,
         {
           headers: {

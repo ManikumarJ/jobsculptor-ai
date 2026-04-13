@@ -8,6 +8,7 @@ import {
 import { Briefcase, CheckCircle, Clock, XCircle, LayoutDashboard, Target, Zap, TrendingUp, Sparkles, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { subscribeToPushNotifications } from '../utils/pushNotifications';
+import API_BASE_URL from "../config/api";
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#ef4444', '#8b5cf6'];
 
@@ -57,7 +58,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/jobs');
+                const res = await axios.get(`${API_BASE_URL}/api/jobs`);
                 setJobs(res.data);
             } catch (err) {
                 console.error('Error fetching jobs', err);
