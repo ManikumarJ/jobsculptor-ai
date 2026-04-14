@@ -54,41 +54,26 @@ startCronJobs();
 const app = express();
 
 // =========================
-// ALLOWED ORIGINS
+// FRONTEND ORIGIN (ONLY ONE)
 // =========================
-const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "https://jobsculptor-71c9eno03-manikumarjs-projects.vercel.app"
-];
+const FRONTEND_URL =
+    "https://jobsculptor-71c9eno03-manikumarjs-projects.vercel.app";
 
 // =========================
 // CORS (FINAL FIX)
 // =========================
 app.use(cors({
-    origin: function (origin, callback) {
-        // allow Postman / server-to-server
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-
-        console.log("❌ Blocked by CORS:", origin);
-
-        // IMPORTANT: DO NOT FAIL REQUEST (prevents login breaking)
-        return callback(null, true);
-    },
+    origin: FRONTEND_URL,
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // IMPORTANT: handle preflight properly
-app.options(/.*/, cors());
+app.options("*", cors());
 
 // =========================
-// MIDDLEWARE ORDER (IMPORTANT)
+// MIDDLEWARE ORDER (VERY IMPORTANT)
 // =========================
 app.use(express.json());
 
@@ -108,13 +93,11 @@ app.use("/api/analyze", analyzeRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // =========================
-// ERROR HANDLER (SAFE)
+// ERROR HANDLER
 // =========================
 app.use((err, req, res, next) => {
-    console.error("Server Error:", err);
-    res.status(500).json({
-        message: "Internal Server Error"
-    });
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
 });
 
 // =========================
