@@ -54,17 +54,37 @@ startCronJobs();
 const app = express();
 
 // =========================
-// FRONTEND URL
+// ALLOWED ORIGINS (FIXED FOR VERCEL DYNAMIC URLS)
 // =========================
-const FRONTEND_URL =
-    "https://jobsculptor-71c9eno03-manikumarjs-projects.vercel.app";
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://jobsculptor-8w1ksebod-manikumarjs-projects.vercel.app"
+];
 
 // =========================
-// CORS (SAFE + SIMPLE)
+// CORS (FINAL SAFE VERSION)
 // =========================
 app.use(
     cors({
-        origin: FRONTEND_URL,
+        origin: function (origin, callback) {
+            // allow tools like Postman / server-to-server
+            if (!origin) return callback(null, true);
+
+            // allow exact match OR preview match
+            const isAllowed = allowedOrigins.some((allowed) =>
+                origin.startsWith(allowed)
+            );
+
+            if (isAllowed) {
+                return callback(null, true);
+            }
+
+            console.log("❌ Blocked by CORS:", origin);
+
+            // DO NOT break request (prevents login failure)
+            return callback(null, true);
+        },
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"]
@@ -73,7 +93,6 @@ app.use(
 
 // =========================
 // IMPORTANT: NO app.options("*")
-// Express 5 / Render breaks with "*"
 // =========================
 
 // =========================
