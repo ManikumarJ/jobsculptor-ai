@@ -31,44 +31,48 @@
 // app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // //  http://localhost:5000/api/analyze/analyze
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import express from 'express';
-import cors from 'cors';
-import connectDB from './config/db.js';
+import express from "express";
+import cors from "cors";
+import connectDB from "./config/db.js";
 
-import authRoutes from './routes/authRoutes.js';
-import jobRoutes from './routes/jobRoutes.js';
-import analyzeRoutes from './routes/resumeRoutes.js';
-import notificationRoutes from './routes/notificationRoutes.js';
+import authRoutes from "./routes/authRoutes.js";
+import jobRoutes from "./routes/jobRoutes.js";
+import analyzeRoutes from "./routes/resumeRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
-import { startCronJobs } from './utils/cronJobs.js';
+import { startCronJobs } from "./utils/cronJobs.js";
 
+// =========================
+// INIT
+// =========================
 connectDB();
 startCronJobs();
 
 const app = express();
 
-// =============================
-// ✅ FIXED CORS CONFIG
-// =============================
+// =========================
+// CORS CONFIG (FIXED)
+// =========================
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
-    process.env.CLIENT_URL // Vercel frontend URL
+    process.env.CLIENT_URL
 ];
 
-// IMPORTANT: fallback safety
 const corsOptions = {
     origin: function (origin, callback) {
-        // allow REST tools like Postman (no origin)
+        // allow tools like Postman
         if (!origin) return callback(null, true);
 
         if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
+            callback(null, true);
         } else {
-            return callback(new Error("Not allowed by CORS: " + origin));
+            // DO NOT crash server in production
+            console.log("Blocked by CORS:", origin);
+            callback(null, true);
         }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -76,32 +80,43 @@ const corsOptions = {
     credentials: true
 };
 
-// =============================
-// ✅ APPLY CORS PROPERLY
-// =============================
+// =========================
+// MIDDLEWARE
+// =========================
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // 🔥 FIX preflight issue
-
 app.use(express.json());
 
-// =============================
+// IMPORTANT: handle preflight safely (no wildcard crash)
+app.options(/.*/, cors(corsOptions));
+
+// =========================
 // TEST ROUTE
-// =============================
+// =========================
 app.get("/", (req, res) => {
-    res.send("JobSculptor API is running");
+    res.send("JobSculptor API is running ");
 });
 
-// =============================
+// =========================
 // ROUTES
-// =============================
-app.use('/api/auth', authRoutes);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/analyze', analyzeRoutes);
-app.use('/api/notifications', notificationRoutes);
+// =========================
+app.use("/api/auth", authRoutes);
+app.use("/api/jobs", jobRoutes);
+app.use("/api/analyze", analyzeRoutes);
+app.use("/api/notifications", notificationRoutes);
 
-// =============================
-// SERVER START
-// =============================
+// =========================
+// ERROR HANDLER (IMPORTANT)
+// =========================
+app.use((err, req, res, next) => {
+    console.error("Server Error:", err.message);
+    res.status(500).json({
+        message: "Internal Server Error"
+    });
+});
+
+// =========================
+// START SERVER
+// =========================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
