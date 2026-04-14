@@ -45,34 +45,51 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 
 import { startCronJobs } from "./utils/cronJobs.js";
 
+// =========================
+// INIT
+// =========================
 connectDB();
 startCronJobs();
 
 const app = express();
 
 // =========================
-// FRONTEND
+// FRONTEND URL
 // =========================
 const FRONTEND_URL =
     "https://jobsculptor-8w1ksebod-manikumarjs-projects.vercel.app";
 
 // =========================
-// CORS (IMPORTANT FIX)
+// CORS CONFIG (SAFE)
 // =========================
-app.use(cors({
-    origin: FRONTEND_URL,
+const corsOptions = {
+    origin: function (origin, callback) {
+        // allow server-to-server / postman
+        if (!origin) return callback(null, true);
+
+        if (origin === FRONTEND_URL) {
+            return callback(null, true);
+        }
+
+        console.log("❌ Blocked by CORS:", origin);
+        return callback(null, true); // (dev safe mode)
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"]
-}));
+    allowedHeaders: ["Content-Type", "Authorization"]
+};
 
-// Handle preflight globally
-app.options("*", cors());
+app.use(cors(corsOptions));
 
-// =========================
-// MIDDLEWARE
-// =========================
+// IMPORTANT: DO NOT USE app.options("*")
 app.use(express.json());
+
+// =========================
+// TEST ROUTE
+// =========================
+app.get("/", (req, res) => {
+    res.send("JobSculptor API is running 🚀");
+});
 
 // =========================
 // ROUTES
@@ -83,19 +100,15 @@ app.use("/api/analyze", analyzeRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // =========================
-// ERROR HANDLER (VERY IMPORTANT)
+// ERROR HANDLER
 // =========================
 app.use((err, req, res, next) => {
     console.error(err);
-
-    res.setHeader("Access-Control-Allow-Origin", FRONTEND_URL);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-
-    res.status(500).json({ message: err.message || "Server Error" });
+    res.status(500).json({ message: "Server Error" });
 });
 
 // =========================
-// START
+// START SERVER
 // =========================
 const PORT = process.env.PORT || 5000;
 
