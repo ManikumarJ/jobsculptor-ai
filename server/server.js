@@ -50,40 +50,32 @@ startCronJobs();
 
 const app = express();
 
-
-// 🔥 CORS CONFIG (FIXED)
+// ✅ CORS CONFIG (FINAL)
 const corsOptions = {
     origin: [
         "http://localhost:5173",
         "http://localhost:5174",
-        process.env.CLIENT_URL // for Vercel later
+        process.env.CLIENT_URL
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 };
 
-// ✅ Apply CORS FIRST
+// ✅ Apply ONLY ONCE
 app.use(cors(corsOptions));
 
-// ✅ Handle preflight requests (VERY IMPORTANT)
-app.options("*", cors(corsOptions));
-
-// ✅ Body parser
 app.use(express.json());
-
 
 // ✅ Test route
 app.get("/", (req, res) => {
     res.send("JobSculptor API is running");
 });
 
-
 // ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/analyze', analyzeRoutes);
 app.use('/api/notifications', notificationRoutes);
-
 
 // ✅ Server
 const PORT = process.env.PORT || 5000;
