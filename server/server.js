@@ -54,13 +54,13 @@ startCronJobs();
 const app = express();
 
 // =========================
-// FRONTEND ORIGIN (ONLY ONE)
+// FRONTEND URL
 // =========================
 const FRONTEND_URL =
     "https://jobsculptor-71c9eno03-manikumarjs-projects.vercel.app";
 
 // =========================
-// CORS (FINAL FIX)
+// CORS (FIXED + SAFE)
 // =========================
 app.use(cors({
     origin: FRONTEND_URL,
@@ -69,11 +69,11 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// IMPORTANT: handle preflight properly
-app.options("*", cors());
+// IMPORTANT: DO NOT use "*"
+// DO NOT use app.options("*", cors())
 
 // =========================
-// MIDDLEWARE ORDER (VERY IMPORTANT)
+// MIDDLEWARE ORDER
 // =========================
 app.use(express.json());
 
