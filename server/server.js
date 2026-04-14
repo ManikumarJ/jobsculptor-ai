@@ -60,20 +60,24 @@ const FRONTEND_URL =
     "https://jobsculptor-71c9eno03-manikumarjs-projects.vercel.app";
 
 // =========================
-// CORS (FIXED + SAFE)
+// CORS (SAFE + SIMPLE)
 // =========================
-app.use(cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-// IMPORTANT: DO NOT use "*"
-// DO NOT use app.options("*", cors())
+app.use(
+    cors({
+        origin: FRONTEND_URL,
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"]
+    })
+);
 
 // =========================
-// MIDDLEWARE ORDER
+// IMPORTANT: NO app.options("*")
+// Express 5 / Render breaks with "*"
+// =========================
+
+// =========================
+// MIDDLEWARE
 // =========================
 app.use(express.json());
 
