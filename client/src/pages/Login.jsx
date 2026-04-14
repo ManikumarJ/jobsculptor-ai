@@ -2,7 +2,6 @@ import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-
 const Login = () => {
     const [formData, setFormData] = useState({
         email: '',
@@ -23,7 +22,7 @@ const Login = () => {
             await login(email, password);
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.msg || err.message || 'Login failed');
+            setError(typeof err === "string" ? err : "Login failed");
         }
     };
 
