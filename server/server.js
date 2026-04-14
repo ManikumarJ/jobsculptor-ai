@@ -45,53 +45,47 @@ import notificationRoutes from './routes/notificationRoutes.js';
 
 import { startCronJobs } from './utils/cronJobs.js';
 
-// Initialize Database and Cron
 connectDB();
 startCronJobs();
 
 const app = express();
 
-// --- UPDATED CORS CONFIGURATION ---
-const allowedOrigins = [
-    "http://localhost:5174",
-    "http://localhost:5173",
-    "https://your-frontend-domain.vercel.app" // Add your production frontend URL here later
-];
 
-app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    credentials: true,
-    optionsSuccessStatus: 200 // Vital for legacy browser/axios support
-}));
+// 🔥 CORS CONFIG (FIXED)
+const corsOptions = {
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        process.env.CLIENT_URL // for Vercel later
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true
+};
 
+// ✅ Apply CORS FIRST
+app.use(cors(corsOptions));
+
+// ✅ Handle preflight requests (VERY IMPORTANT)
+app.options("*", cors(corsOptions));
+
+// ✅ Body parser
 app.use(express.json());
 
-// Basic Health Check
+
+// ✅ Test route
 app.get("/", (req, res) => {
     res.send("JobSculptor API is running");
 });
 
-// Routes
+
+// ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/analyze', analyzeRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// Error Handling Middleware (Optional but recommended)
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send({ message: err.message || 'Something went wrong!' });
-});
 
+// ✅ Server
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
