@@ -54,7 +54,7 @@ startCronJobs();
 const app = express();
 
 // =========================
-// ALLOWED ORIGINS (FIXED FOR VERCEL DYNAMIC URLS)
+// FRONTEND
 // =========================
 const allowedOrigins = [
     "http://localhost:5173",
@@ -63,37 +63,26 @@ const allowedOrigins = [
 ];
 
 // =========================
-// CORS (FINAL SAFE VERSION)
+// CORS (FINAL FIX)
 // =========================
-app.use(
-    cors({
-        origin: function (origin, callback) {
-            // allow tools like Postman / server-to-server
-            if (!origin) return callback(null, true);
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
 
-            // allow exact match OR preview match
-            const isAllowed = allowedOrigins.some((allowed) =>
-                origin.startsWith(allowed)
-            );
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, origin);
+        }
 
-            if (isAllowed) {
-                return callback(null, true);
-            }
+        console.log("❌ Blocked by CORS:", origin);
+        return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
-            console.log("❌ Blocked by CORS:", origin);
-
-            // DO NOT break request (prevents login failure)
-            return callback(null, true);
-        },
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"]
-    })
-);
-
-// =========================
-// IMPORTANT: NO app.options("*")
-// =========================
+// 🔥 IMPORTANT (preflight fix)
+app.options("*", cors());
 
 // =========================
 // MIDDLEWARE
@@ -120,7 +109,7 @@ app.use("/api/notifications", notificationRoutes);
 // =========================
 app.use((err, req, res, next) => {
     console.error(err);
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: err.message || "Server Error" });
 });
 
 // =========================
