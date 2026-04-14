@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     // =========================
-    // Set axios auth header safely
+    // Set Axios Header Globally
     // =========================
     useEffect(() => {
         if (token) {
@@ -21,29 +21,37 @@ export const AuthProvider = ({ children }) => {
     }, [token]);
 
     // =========================
-    // Load user
+    // LOAD USER (FIXED)
     // =========================
     const loadUser = async () => {
         if (!token) {
+            setUser(null);
             setLoading(false);
             return;
         }
 
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/auth/me`);
+            const res = await axios.get(`${API_BASE_URL}/api/auth/`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
             setUser(res.data);
         } catch (err) {
-            console.error(err);
+            console.error("Load user failed:", err);
+
             localStorage.removeItem("token");
             setToken("");
             setUser(null);
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     useEffect(() => {
         loadUser();
+        // eslint-disable-next-line
     }, [token]);
 
     // =========================
@@ -58,6 +66,7 @@ export const AuthProvider = ({ children }) => {
 
             localStorage.setItem("token", res.data.token);
             setToken(res.data.token);
+
             return true;
         } catch (err) {
             throw err.response?.data?.msg || "Login failed";
@@ -76,6 +85,7 @@ export const AuthProvider = ({ children }) => {
 
             localStorage.setItem("token", res.data.token);
             setToken(res.data.token);
+
             return true;
         } catch (err) {
             throw err.response?.data?.msg || "Register failed";
@@ -91,6 +101,9 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    // =========================
+    // CONTEXT VALUE
+    // =========================
     return (
         <AuthContext.Provider
             value={{

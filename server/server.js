@@ -45,9 +45,6 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 
 import { startCronJobs } from "./utils/cronJobs.js";
 
-// =========================
-// INIT
-// =========================
 connectDB();
 startCronJobs();
 
@@ -56,45 +53,26 @@ const app = express();
 // =========================
 // FRONTEND
 // =========================
-const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "https://jobsculptor-8w1ksebod-manikumarjs-projects.vercel.app"
-];
+const FRONTEND_URL =
+    "https://jobsculptor-8w1ksebod-manikumarjs-projects.vercel.app";
 
 // =========================
-// CORS (FINAL FIX)
+// CORS (IMPORTANT FIX)
 // =========================
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, origin);
-        }
-
-        console.log("❌ Blocked by CORS:", origin);
-        return callback(new Error("Not allowed by CORS"));
-    },
+    origin: FRONTEND_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"]
 }));
 
-// 🔥 IMPORTANT (preflight fix)
+// Handle preflight globally
 app.options("*", cors());
 
 // =========================
 // MIDDLEWARE
 // =========================
 app.use(express.json());
-
-// =========================
-// TEST ROUTE
-// =========================
-app.get("/", (req, res) => {
-    res.send("JobSculptor API is running 🚀");
-});
 
 // =========================
 // ROUTES
@@ -105,15 +83,19 @@ app.use("/api/analyze", analyzeRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // =========================
-// ERROR HANDLER
+// ERROR HANDLER (VERY IMPORTANT)
 // =========================
 app.use((err, req, res, next) => {
     console.error(err);
+
+    res.setHeader("Access-Control-Allow-Origin", FRONTEND_URL);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+
     res.status(500).json({ message: err.message || "Server Error" });
 });
 
 // =========================
-// START SERVER
+// START
 // =========================
 const PORT = process.env.PORT || 5000;
 
