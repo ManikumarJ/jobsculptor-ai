@@ -50,34 +50,58 @@ startCronJobs();
 
 const app = express();
 
-// ✅ CORS CONFIG (FINAL)
+// =============================
+// ✅ FIXED CORS CONFIG
+// =============================
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    process.env.CLIENT_URL // Vercel frontend URL
+];
+
+// IMPORTANT: fallback safety
 const corsOptions = {
-    origin: [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        process.env.CLIENT_URL
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: function (origin, callback) {
+        // allow REST tools like Postman (no origin)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        } else {
+            return callback(new Error("Not allowed by CORS: " + origin));
+        }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
 };
 
-// ✅ Apply ONLY ONCE
+// =============================
+// ✅ APPLY CORS PROPERLY
+// =============================
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // 🔥 FIX preflight issue
 
 app.use(express.json());
 
-// ✅ Test route
+// =============================
+// TEST ROUTE
+// =============================
 app.get("/", (req, res) => {
     res.send("JobSculptor API is running");
 });
 
-// ✅ Routes
+// =============================
+// ROUTES
+// =============================
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/analyze', analyzeRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// ✅ Server
+// =============================
+// SERVER START
+// =============================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
