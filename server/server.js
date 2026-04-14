@@ -54,46 +54,49 @@ startCronJobs();
 const app = express();
 
 // =========================
-// CORS CONFIG (FIXED)
+// ALLOWED ORIGINS
 // =========================
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
-    process.env.CLIENT_URL
+    "https://jobsculptor-71c9eno03-manikumarjs-projects.vercel.app"
 ];
 
-const corsOptions = {
+// =========================
+// CORS (FINAL FIX)
+// =========================
+app.use(cors({
     origin: function (origin, callback) {
-        // allow tools like Postman
+        // allow Postman / server-to-server
         if (!origin) return callback(null, true);
 
         if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            // DO NOT crash server in production
-            console.log("Blocked by CORS:", origin);
-            callback(null, true);
+            return callback(null, true);
         }
+
+        console.log("❌ Blocked by CORS:", origin);
+
+        // IMPORTANT: DO NOT FAIL REQUEST (prevents login breaking)
+        return callback(null, true);
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
-};
+}));
+
+// IMPORTANT: handle preflight properly
+app.options(/.*/, cors());
 
 // =========================
-// MIDDLEWARE
+// MIDDLEWARE ORDER (IMPORTANT)
 // =========================
-app.use(cors(corsOptions));
 app.use(express.json());
-
-// IMPORTANT: handle preflight safely (no wildcard crash)
-app.options(/.*/, cors(corsOptions));
 
 // =========================
 // TEST ROUTE
 // =========================
 app.get("/", (req, res) => {
-    res.send("JobSculptor API is running ");
+    res.send("JobSculptor API is running 🚀");
 });
 
 // =========================
@@ -105,10 +108,10 @@ app.use("/api/analyze", analyzeRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // =========================
-// ERROR HANDLER (IMPORTANT)
+// ERROR HANDLER (SAFE)
 // =========================
 app.use((err, req, res, next) => {
-    console.error("Server Error:", err.message);
+    console.error("Server Error:", err);
     res.status(500).json({
         message: "Internal Server Error"
     });
