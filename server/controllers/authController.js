@@ -62,3 +62,15 @@ export const getUser = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
+// Update user job columns
+export const updateColumns = async (req, res) => {
+    const { columns } = req.body;
+    try {
+        const user = await User.findByIdAndUpdate(req.user.id, { jobColumns: columns }, { new: true }).select('-password');
+        res.json({ msg: 'Columns updated', user });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};

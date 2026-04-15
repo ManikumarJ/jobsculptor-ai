@@ -12,7 +12,7 @@ const JobSchema = new mongoose.Schema({
     matchedSkills: { type: [String], default: [] }, // Skills found in resume & job
     missingSkills: { type: [String], default: [] }, // Skills missing in resume
     notes: { type: String },
-    status: { type: String, enum: ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected'], default: 'Saved' },
+    status: { type: String, default: 'Saved' },
     interviewDate: { type: Date },
     reminderSent: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
