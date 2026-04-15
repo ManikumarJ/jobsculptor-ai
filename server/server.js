@@ -56,8 +56,7 @@ const app = express();
 // =========================
 // FRONTEND URL
 // =========================
-const FRONTEND_URL =
-    "https://jobsculptor-8w1ksebod-manikumarjs-projects.vercel.app";
+const FRONTEND_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 // =========================
 // CORS CONFIG (SAFE)

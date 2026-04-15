@@ -54,7 +54,7 @@ export const subscribeToPushNotifications = async () => {
         if (token) {
             await axios.post(`${API_BASE_URL}/api/notifications/subscribe`, subscription, {
                 headers: {
-                    'x-auth-token': token
+                    Authorization: `Bearer ${token}`
                 }
             });
             console.log('Push subscription successfully sent to backend.');

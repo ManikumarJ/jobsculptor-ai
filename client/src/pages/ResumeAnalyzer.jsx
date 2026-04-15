@@ -43,13 +43,13 @@ const ResumeAnalyzer = () => {
         {
           companyName: jobData.companyName,
           jobTitle: jobData.jobTitle,
-          description: jobDescription,
+          jobDescription: jobDescription,
           matchScore: results.matchScore,
           appliedDate: jobData.appliedDate,
           notes: jobData.notes,
           status: 'Saved',
         },
-        { headers: { 'x-auth-token': token } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Job added to tracker!');
       navigate('/tracker');
@@ -108,7 +108,7 @@ const ResumeAnalyzer = () => {
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'x-auth-token': token // must be included
+            'Authorization': `Bearer ${token}`
           }
         }
       );
