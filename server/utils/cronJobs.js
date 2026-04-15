@@ -35,12 +35,24 @@ export const startCronJobs = () => {
             if (upcomingInterviews.length > 0) {
                 console.log(`[CRON] Found ${upcomingInterviews.length} upcoming interviews to send reminders for.`);
 
-                for (const job of upcomingInterviews) {
-                    const user = job.userId;
+                for (const item of upcomingInterviews) {
+                    const user = item.userId;
 
                     if (!user) {
-                        console.log(`[CRON] User for Job ${job._id} not found. Skipping.`);
+                        console.log(`[CRON] User for Job ${item._id} not found. Skipping.`);
                         continue;
+                    }
+
+                    // ATOMIC LOCK: Try to set reminderSent = true to prevent double execution if multiple servers run the cron (e.g. Render + Local)
+                    const job = await Job.findOneAndUpdate(
+                        { _id: item._id, reminderSent: false },
+                        { $set: { reminderSent: true } },
+                        { new: true }
+                    );
+
+                    if (!job) {
+                        console.log(`[CRON] Job ${item._id} already processed by another worker. Skipping.`);
+                        continue; // Another instance raced and already processed this!
                     }
 
                     const notificationTitle = `Upcoming Interview: ${job.companyName}`;
@@ -78,13 +90,8 @@ export const startCronJobs = () => {
                                 console.log(`[CRON] Removed invalid push subscription for ${user.email}`);
                             }
                         }
-                    } else {
                         console.log(`[CRON] User ${user.email} has no push config. Skipping Web-Push, but history logged.`);
                     }
-
-                    // Mark job reminder as resolved
-                    job.reminderSent = true;
-                    await job.save();
                 }
             } else {
                 console.log(`[CRON] No upcoming interviews requiring reminders right now.`);

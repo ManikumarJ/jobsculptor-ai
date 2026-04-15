@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Briefcase, FileText, LayoutDashboard, LogOut, Bell } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import API_BASE_URL from "../config/api";
 
 const Navbar = () => {
@@ -26,7 +27,18 @@ const Navbar = () => {
             const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setNotifications(res.data);
+
+            const newNotifs = res.data;
+            if (notifications.length > 0) {
+                const existingIds = new Set(notifications.map(n => n._id));
+                const freshUnreads = newNotifs.filter(n => (!n.isRead && !existingIds.has(n._id)));
+                
+                freshUnreads.forEach(n => {
+                    toast.info(`🔔 ${n.title}`, { position: "bottom-right", autoClose: 6000 });
+                });
+            }
+
+            setNotifications(newNotifs);
         } catch (error) {
             console.error("Failed to fetch notifications", error);
         }

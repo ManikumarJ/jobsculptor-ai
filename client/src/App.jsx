@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Landing from './pages/Landing';
@@ -16,6 +18,7 @@ function App() {
         <AuthProvider>
             <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <div className="min-h-screen bg-gray-50 flex flex-col">
+                    <ToastContainer position="top-right" />
                     <Navbar />
                     <main className="flex-grow flex flex-col">
                         <Routes>
